@@ -1,6 +1,6 @@
 export const QRCodeModes = {
-    NUMERIC: 1,
-    ALPHANUMERIC: 2,
-    BYTE: 3,
+    "NUMERIC": "0001",
+    "ALPHANUMERIC": "0010",
+    "BYTE": "0100",
 };
 Object.freeze(QRCodeModes);
