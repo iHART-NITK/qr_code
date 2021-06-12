@@ -494,6 +494,22 @@ commonFunctions.QRCode = class QRCode {
         }
     }
 
+    toSvgString(border) {
+        if (border < 0) throw "Border must be non-negative";
+        let parts = [];
+        for (let y = 0; y < this.size; y++) {
+            for (let x = 0; x < this.size; x++) {
+                if (this.getModule(x, y))
+                    parts.push(`M${x + border},${y + border}h1v1h-1z`);
+            }
+        }
+        this.final_svg = `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 ${this.size + border * 2} ${this.size + border * 2}" stroke="none"><rect width="100%" height="100%" fill="#FFFFFF"/><path d="${parts.join(" ")}" fill="#000000"/></svg>`;
+    }
+
+    getModule(x, y) {
+        return 0 <= x && x < this.size && 0 <= y && y < this.size && this.modules[y][x];
+    }
+
     generateQRCode() {
         this.getQRCodeMode();
         this.encodeDataToBitStream(this.mode, this.data);
@@ -505,6 +521,7 @@ commonFunctions.QRCode = class QRCode {
         this.addEccAndInterleave();
         this.prepareToMask();
         this.selectMask();
+        this.toSvgString(1);
     }
 }
 
