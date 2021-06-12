@@ -22,7 +22,6 @@ commonFunctions.ReedSolomon = /** @class */ (function() {
     // QR Code of the given version number and error correction level, with remainder bits discarded.
     // This stateless pure function could be implemented as a (40*4)-cell lookup table.
     ReedSolomon.getNumDataCodewords = function(ver, QrCode) {
-        console.log(QrCode);
         var ecl = QrCode.error_correction_level;
         return Math.floor(ReedSolomon.getNumRawDataModules(ver) / 8) -
             QrCode.ECC_CODEWORDS_PER_BLOCK[ErrorCorrectionLevels[ecl]][ver] *

@@ -3,6 +3,11 @@ const BitHandlingUtility = require("./bit_handling_util.js").BitHandlingUtility;
 const qrVersionDatabase = require("./qr_version_database.js").qrVersionDatabase;
 const characterCountIndicatorLength = require("./character_count_indicator_length.js").characterCountIndicatorLength;
 const ReedSolomon = require("./reed_solomon.js").ReedSolomon;
+const ErrorCorrectionLevelFormatBits = require("./error_correction_level_format_bits.js").ErrorCorrectionLevelFormatBits;
+
+function getBit(x, i) {
+    return ((x >>> i) & 1) != 0;
+}
 
 const bitHandlingUtilty = new BitHandlingUtility();
 var commonFunctions = {};
@@ -50,6 +55,14 @@ commonFunctions.QRCode = class QRCode {
                 74, 77, 81,
             ], // High
         ];
+
+        this.PENALTY_N1 = 3;
+        this.PENALTY_N2 = 3;
+        this.PENALTY_N3 = 40;
+        this.PENALTY_N4 = 10;
+
+        this.modules = [];
+        this.isFunction = [];
     }
 
     getQRCodeMode() {
@@ -179,6 +192,308 @@ commonFunctions.QRCode = class QRCode {
             }).join("");
     }
 
+    prepareToMask() {
+        this.size = this.version * 4 + 17;
+
+        // Initialize both grids to be size*size arrays of Boolean false
+        let row = [];
+        for (let i = 0; i < this.size; i++) row.push(false);
+        for (let i = 0; i < this.size; i++) {
+            this.modules.push(row.slice()); // Initially all white
+            this.isFunction.push(row.slice());
+        }
+
+        this.drawFunctionPatterns();
+        this.drawCodewords(this.finalByteArray);
+    }
+
+    drawCodewords(data) {
+        let i = 0; // Bit index into the data
+        // Do the funny zigzag scan
+        for (let right = this.size - 1; right >= 1; right -= 2) { // Index of right column in each column pair
+            if (right == 6)
+                right = 5;
+            for (let vert = 0; vert < this.size; vert++) { // Vertical counter
+                for (let j = 0; j < 2; j++) {
+                    const x = right - j; // Actual x coordinate
+                    const upward = ((right + 1) & 2) == 0;
+                    const y = upward ? this.size - 1 - vert : vert; // Actual y coordinate
+                    if (!this.isFunction[y][x] && i < data.length * 8) {
+                        this.modules[y][x] = getBit(data[i >>> 3], 7 - (i & 7));
+                        i++;
+                    }
+                    // If this QR Code has any remainder bits (0 to 7), they were assigned as
+                    // 0/false/white by the constructor and are left unchanged by this method
+                }
+            }
+        }
+        if (i != data.length * 8)
+            throw "Assertion error";
+    }
+
+    selectMask() {
+        let mask = -1;
+        let minPenalty = 1000000000;
+        for (let i = 0; i < 8; i++) {
+            this.applyMask(i);
+            this.drawFormatBits(i);
+            const penalty = this.getPenaltyScore();
+            if (penalty < minPenalty) {
+                mask = i;
+                minPenalty = penalty;
+            }
+            this.applyMask(i); // Undoes the mask due to XOR
+        }
+        this.mask = mask;
+        this.applyMask(mask); // Apply the final choice of mask
+        this.drawFormatBits(mask); // Overwrite old format bits
+
+        this.isFunction = [];
+    }
+
+    applyMask(mask) {
+        if (mask < 0 || mask > 7)
+            throw "Mask value out of range";
+        for (let y = 0; y < this.size; y++) {
+            for (let x = 0; x < this.size; x++) {
+                let invert;
+                switch (mask) {
+                    case 0:
+                        invert = (x + y) % 2 == 0;
+                        break;
+                    case 1:
+                        invert = y % 2 == 0;
+                        break;
+                    case 2:
+                        invert = x % 3 == 0;
+                        break;
+                    case 3:
+                        invert = (x + y) % 3 == 0;
+                        break;
+                    case 4:
+                        invert = (Math.floor(x / 3) + Math.floor(y / 2)) % 2 == 0;
+                        break;
+                    case 5:
+                        invert = x * y % 2 + x * y % 3 == 0;
+                        break;
+                    case 6:
+                        invert = (x * y % 2 + x * y % 3) % 2 == 0;
+                        break;
+                    case 7:
+                        invert = ((x + y) % 2 + x * y % 3) % 2 == 0;
+                        break;
+                    default:
+                        throw "Assertion error";
+                }
+                if (!this.isFunction[y][x] && invert)
+                    this.modules[y][x] = !this.modules[y][x];
+            }
+        }
+    }
+
+    drawFormatBits(mask) {
+        // Calculate error correction code and pack bits
+        const data = ErrorCorrectionLevelFormatBits[this.error_correction_level] << 3 | mask; // errCorrLvl is uint2, mask is uint3
+        let rem = data;
+        for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+        const bits = (data << 10 | rem) ^ 0x5412; // uint15
+        if (bits >>> 15 != 0) throw "Assertion error";
+
+        // Draw first copy
+        for (let i = 0; i <= 5; i++) this.setFunctionModule(8, i, getBit(bits, i));
+        this.setFunctionModule(8, 7, getBit(bits, 6));
+        this.setFunctionModule(8, 8, getBit(bits, 7));
+        this.setFunctionModule(7, 8, getBit(bits, 8));
+        for (let i = 9; i < 15; i++) this.setFunctionModule(14 - i, 8, getBit(bits, i));
+
+        // Draw second copy
+        for (let i = 0; i < 8; i++) this.setFunctionModule(this.size - 1 - i, 8, getBit(bits, i));
+        for (let i = 8; i < 15; i++) this.setFunctionModule(8, this.size - 15 + i, getBit(bits, i));
+        this.setFunctionModule(8, this.size - 8, true); // Always black
+    }
+
+    setFunctionModule(x, y, isBlack) {
+        this.modules[y][x] = isBlack;
+        this.isFunction[y][x] = true;
+    }
+
+    getPenaltyScore() {
+        let result = 0;
+
+        // Adjacent modules in row having same color, and finder-like patterns
+        for (let y = 0; y < this.size; y++) {
+            let runColor = false;
+            let runX = 0;
+            let runHistory = [0, 0, 0, 0, 0, 0, 0];
+            for (let x = 0; x < this.size; x++) {
+                if (this.modules[y][x] == runColor) {
+                    runX++;
+                    if (runX == 5)
+                        result += this.PENALTY_N1;
+                    else if (runX > 5)
+                        result++;
+                } else {
+                    this.finderPenaltyAddHistory(runX, runHistory);
+                    if (!runColor)
+                        result += this.finderPenaltyCountPatterns(runHistory) * this.PENALTY_N3;
+                    runColor = this.modules[y][x];
+                    runX = 1;
+                }
+            }
+            result += this.finderPenaltyTerminateAndCount(runColor, runX, runHistory) * this.PENALTY_N3;
+        }
+        // Adjacent modules in column having same color, and finder-like patterns
+        for (let x = 0; x < this.size; x++) {
+            let runColor = false;
+            let runY = 0;
+            let runHistory = [0, 0, 0, 0, 0, 0, 0];
+            for (let y = 0; y < this.size; y++) {
+                if (this.modules[y][x] == runColor) {
+                    runY++;
+                    if (runY == 5)
+                        result += this.PENALTY_N1;
+                    else if (runY > 5)
+                        result++;
+                } else {
+                    this.finderPenaltyAddHistory(runY, runHistory);
+                    if (!runColor)
+                        result += this.finderPenaltyCountPatterns(runHistory) * this.PENALTY_N3;
+                    runColor = this.modules[y][x];
+                    runY = 1;
+                }
+            }
+            result += this.finderPenaltyTerminateAndCount(runColor, runY, runHistory) * this.PENALTY_N3;
+        }
+
+        // 2*2 blocks of modules having same color
+        for (let y = 0; y < this.size - 1; y++) {
+            for (let x = 0; x < this.size - 1; x++) {
+                const color = this.modules[y][x];
+                if (color == this.modules[y][x + 1] &&
+                    color == this.modules[y + 1][x] &&
+                    color == this.modules[y + 1][x + 1])
+                    result += this.PENALTY_N2;
+            }
+        }
+
+        // Balance of black and white modules
+        let black = 0;
+        for (const row of this.modules)
+            black = row.reduce((sum, color) => sum + (color ? 1 : 0), black);
+        const total = this.size * this.size; // Note that size is odd, so black/total != 1/2
+        // Compute the smallest integer k >= 0 such that (45-5k)% <= black/total <= (55+5k)%
+        const k = Math.ceil(Math.abs(black * 20 - total * 10) / total) - 1;
+        result += k * this.PENALTY_N4;
+        return result;
+    }
+
+    finderPenaltyCountPatterns(runHistory) {
+        const n = runHistory[1];
+        if (n > this.size * 3)
+            throw "Assertion error";
+        const core = n > 0 && runHistory[2] == n && runHistory[3] == n * 3 && runHistory[4] == n && runHistory[5] == n;
+        return (core && runHistory[0] >= n * 4 && runHistory[6] >= n ? 1 : 0) +
+            (core && runHistory[6] >= n * 4 && runHistory[0] >= n ? 1 : 0);
+    }
+
+    finderPenaltyTerminateAndCount(currentRunColor, currentRunLength, runHistory) {
+        if (currentRunColor) { // Terminate black run
+            this.finderPenaltyAddHistory(currentRunLength, runHistory);
+            currentRunLength = 0;
+        }
+        currentRunLength += this.size; // Add white border to final run
+        this.finderPenaltyAddHistory(currentRunLength, runHistory);
+        return this.finderPenaltyCountPatterns(runHistory);
+    }
+
+    finderPenaltyAddHistory(currentRunLength, runHistory) {
+        if (runHistory[0] == 0)
+            currentRunLength += this.size; // Add white border to initial run
+        runHistory.pop();
+        runHistory.unshift(currentRunLength);
+    }
+
+    drawFinderPattern(x, y) {
+        for (let dy = -4; dy <= 4; dy++) {
+            for (let dx = -4; dx <= 4; dx++) {
+                const dist = Math.max(Math.abs(dx), Math.abs(dy)); // Chebyshev/infinity norm
+                const xx = x + dx;
+                const yy = y + dy;
+                if (0 <= xx && xx < this.size && 0 <= yy && yy < this.size)
+                    this.setFunctionModule(xx, yy, dist != 2 && dist != 4);
+            }
+        }
+    }
+
+    drawFunctionPatterns() {
+        // Draw horizontal and vertical timing patterns
+        for (let i = 0; i < this.size; i++) {
+            this.setFunctionModule(6, i, i % 2 == 0);
+            this.setFunctionModule(i, 6, i % 2 == 0);
+        }
+
+        // Draw 3 finder patterns (all corners except bottom right; overwrites some timing modules)
+        this.drawFinderPattern(3, 3);
+        this.drawFinderPattern(this.size - 4, 3);
+        this.drawFinderPattern(3, this.size - 4);
+
+        // Draw numerous alignment patterns
+        const alignPatPos = this.getAlignmentPatternPositions();
+        const numAlign = alignPatPos.length;
+        for (let i = 0; i < numAlign; i++) {
+            for (let j = 0; j < numAlign; j++) {
+                // Don't draw on the three finder corners
+                if (!(i == 0 && j == 0 || i == 0 && j == numAlign - 1 || i == numAlign - 1 && j == 0))
+                    this.drawAlignmentPattern(alignPatPos[i], alignPatPos[j]);
+            }
+        }
+
+        // Draw configuration data
+        this.drawFormatBits(0); // Dummy mask value; overwritten later in the constructor
+        this.drawVersion();
+    }
+
+    drawAlignmentPattern(x, y) {
+        for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++)
+                this.setFunctionModule(x + dx, y + dy, Math.max(Math.abs(dx), Math.abs(dy)) != 1);
+        }
+    }
+
+    drawVersion() {
+        if (this.version < 7) return;
+
+        // Calculate error correction code and pack bits
+        let rem = this.version; // version is uint6, in the range [7, 40]
+        for (let i = 0; i < 12; i++)
+            rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+        const bits = this.version << 12 | rem; // uint18
+        if (bits >>> 18 != 0) throw "Assertion error";
+
+        // Draw two copies
+        for (let i = 0; i < 18; i++) {
+            const color = getBit(bits, i);
+            const a = this.size - 11 + i % 3;
+            const b = Math.floor(i / 3);
+            this.setFunctionModule(a, b, color);
+            this.setFunctionModule(b, a, color);
+        }
+    }
+
+    getAlignmentPatternPositions() {
+        if (this.version == 1)
+            return [];
+        else {
+            const numAlign = Math.floor(this.version / 7) + 2;
+            const step = (this.version == 32) ? 26 :
+                Math.ceil((this.size - 13) / (numAlign * 2 - 2)) * 2;
+            let result = [6];
+            for (let pos = this.size - 7; result.length < numAlign; pos -= step)
+                result.splice(1, 0, pos);
+            return result;
+        }
+    }
+
     generateQRCode() {
         this.getQRCodeMode();
         this.encodeDataToBitStream(this.mode, this.data);
@@ -188,6 +503,8 @@ commonFunctions.QRCode = class QRCode {
         this.addBytePadding();
         this.convertStringBitstreamToArrayBytes();
         this.addEccAndInterleave();
+        this.prepareToMask();
+        this.selectMask();
     }
 }
 
