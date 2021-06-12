@@ -1,4 +1,5 @@
-export class BitHandlingUtility {
+var commonFunctions = {};
+commonFunctions.BitHandlingUtility = class BitHandlingUtility {
     getEncodedBitStringFromNumber(number, min_len, toIncreaseToMinLen) {
         let resultBitString = "";
         resultBitString = number.toString(2).toString();
@@ -11,3 +12,5 @@ export class BitHandlingUtility {
         return resultBitString;
     }
 }
+
+module.exports = commonFunctions;

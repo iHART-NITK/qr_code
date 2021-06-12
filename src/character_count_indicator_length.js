@@ -1,4 +1,5 @@
-export const characterCountIndicatorLength = {
+var commonFunctions = {};
+commonFunctions.characterCountIndicatorLength = {
     "9": {
         "NUMERIC": 10,
         "ALPHANUMERIC": 9,
@@ -15,3 +16,4 @@ export const characterCountIndicatorLength = {
         "BYTE": 16,
     },
 }
+module.exports = commonFunctions;

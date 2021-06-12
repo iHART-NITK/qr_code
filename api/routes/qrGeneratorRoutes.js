@@ -1,9 +1,9 @@
 'use strict';
 module.exports = function(app) {
-  var qr = require('../controllers/qrGeneratorController');
+    var qr = require('../controllers/qrGeneratorController');
 
-  // todoList Routes
-  app.route('/:id')
-    .get(qr.test);
+    // todoList Routes
+    app.route('/:ecl/:data')
+        .get(qr.qrGeneratorController);
 
 };

@@ -1,12 +1,12 @@
-import { ErrorCorrectionLevels } from "./error_correction_levels.js";
-import { QRCodeModes } from "./qr_code_modes.js";
-import { BitHandlingUtility } from "./bit_handling_util.js";
-import { qrVersionDatabase } from "./qr_version_database.js";
-import { characterCountIndicatorLength } from "./character_count_indicator_length.js";
-import { ReedSolomon } from "./reed_solomon.js";
+const QRCodeModes = require("./qr_code_modes.js").QRCodeModes;
+const BitHandlingUtility = require("./bit_handling_util.js").BitHandlingUtility;
+const qrVersionDatabase = require("./qr_version_database.js").qrVersionDatabase;
+const characterCountIndicatorLength = require("./character_count_indicator_length.js").characterCountIndicatorLength;
+const ReedSolomon = require("./reed_solomon.js").ReedSolomon;
 
 const bitHandlingUtilty = new BitHandlingUtility();
-export class QRCode {
+var commonFunctions = {};
+commonFunctions.QRCode = class QRCode {
     constructor(data, error_correction_level) {
         // this data is the string to be encoded
         this.data = data;
@@ -173,20 +173,22 @@ export class QRCode {
             this.finalByteArray,
             this
         );
-        this.final_data_bit_stream = qr.finalByteArray
+        this.final_data_bit_stream = this.finalByteArray
             .map(num => {
                 return num.toString(2).padStart(8, "0");
             }).join("");
     }
+
+    generateQRCode() {
+        this.getQRCodeMode();
+        this.encodeDataToBitStream(this.mode, this.data);
+        this.fitDataToVersion();
+        this.addModeAndCountBits();
+        this.addTerminatorAndBitPadding();
+        this.addBytePadding();
+        this.convertStringBitstreamToArrayBytes();
+        this.addEccAndInterleave();
+    }
 }
 
-let qr = new QRCode("12345", "H");
-qr.getQRCodeMode();
-qr.encodeDataToBitStream(qr.mode, qr.data);
-qr.fitDataToVersion();
-qr.addModeAndCountBits();
-qr.addTerminatorAndBitPadding();
-qr.addBytePadding();
-qr.convertStringBitstreamToArrayBytes();
-qr.addEccAndInterleave();
-console.log(qr.final_data_bit_stream);
+module.exports = commonFunctions;

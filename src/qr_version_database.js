@@ -1,4 +1,5 @@
-export const qrVersionDatabase = {
+var commonFunctions = {};
+commonFunctions.qrVersionDatabase = {
     "1": {
         "L": {
             "codewords": "19",
@@ -1360,3 +1361,5 @@ export const qrVersionDatabase = {
         }
     }
 }
+
+module.exports = commonFunctions;
