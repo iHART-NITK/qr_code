@@ -227,8 +227,6 @@ commonFunctions.QRCode = class QRCode {
                 }
             }
         }
-        if (i != data.length * 8)
-            throw "Assertion error";
     }
 
     selectMask() {
@@ -252,8 +250,6 @@ commonFunctions.QRCode = class QRCode {
     }
 
     applyMask(mask) {
-        if (mask < 0 || mask > 7)
-            throw "Mask value out of range";
         for (let y = 0; y < this.size; y++) {
             for (let x = 0; x < this.size; x++) {
                 let invert;
@@ -282,8 +278,6 @@ commonFunctions.QRCode = class QRCode {
                     case 7:
                         invert = ((x + y) % 2 + x * y % 3) % 2 == 0;
                         break;
-                    default:
-                        throw "Assertion error";
                 }
                 if (!this.isFunction[y][x] && invert)
                     this.modules[y][x] = !this.modules[y][x];
@@ -297,7 +291,6 @@ commonFunctions.QRCode = class QRCode {
         let rem = data;
         for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
         const bits = (data << 10 | rem) ^ 0x5412; // uint15
-        if (bits >>> 15 != 0) throw "Assertion error";
 
         // Draw first copy
         for (let i = 0; i <= 5; i++) this.setFunctionModule(8, i, getBit(bits, i));
@@ -389,8 +382,6 @@ commonFunctions.QRCode = class QRCode {
 
     finderPenaltyCountPatterns(runHistory) {
         const n = runHistory[1];
-        if (n > this.size * 3)
-            throw "Assertion error";
         const core = n > 0 && runHistory[2] == n && runHistory[3] == n * 3 && runHistory[4] == n && runHistory[5] == n;
         return (core && runHistory[0] >= n * 4 && runHistory[6] >= n ? 1 : 0) +
             (core && runHistory[6] >= n * 4 && runHistory[0] >= n ? 1 : 0);
@@ -468,7 +459,6 @@ commonFunctions.QRCode = class QRCode {
         for (let i = 0; i < 12; i++)
             rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
         const bits = this.version << 12 | rem; // uint18
-        if (bits >>> 18 != 0) throw "Assertion error";
 
         // Draw two copies
         for (let i = 0; i < 18; i++) {
@@ -495,7 +485,6 @@ commonFunctions.QRCode = class QRCode {
     }
 
     toSvgString(border) {
-        if (border < 0) throw "Border must be non-negative";
         let parts = [];
         for (let y = 0; y < this.size; y++) {
             for (let x = 0; x < this.size; x++) {

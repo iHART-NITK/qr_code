@@ -5,8 +5,6 @@ var commonFunctions = {};
 commonFunctions.ReedSolomon = /** @class */ (function() {
     function ReedSolomon() {}
     ReedSolomon.getNumRawDataModules = function(ver) {
-        if (ver < 1 || ver > 40)
-            throw "Version number out of range";
         var result = (16 * ver + 128) * ver + 64;
         if (ver >= 2) {
             var numAlign = Math.floor(ver / 7) + 2;
@@ -14,8 +12,6 @@ commonFunctions.ReedSolomon = /** @class */ (function() {
             if (ver >= 7)
                 result -= 36;
         }
-        if (!(208 <= result && result <= 29648))
-            throw "Assertion error";
         return result;
     };
     // Returns the number of 8-bit data (i.e. not error correction) codewords contained in any
@@ -30,8 +26,6 @@ commonFunctions.ReedSolomon = /** @class */ (function() {
     // Returns a Reed-Solomon ECC generator polynomial for the given degree. This could be
     // implemented as a lookup table over all possible parameter values, instead of as an algorithm.
     ReedSolomon.reedSolomonComputeDivisor = function(degree) {
-        if (degree < 1 || degree > 255)
-            throw "Degree out of range";
         // Polynomial coefficients are stored from highest to lowest power, excluding the leading term which is always 1.
         // For example the polynomial x^3 + 255x^2 + 8x + 93 is stored as the uint8 array [255, 8, 93].
         var result = [];
@@ -72,23 +66,17 @@ commonFunctions.ReedSolomon = /** @class */ (function() {
     // Returns the product of the two given field elements modulo GF(2^8/0x11D). The arguments and result
     // are unsigned 8-bit integers. This could be implemented as a lookup table of 256*256 entries of uint8.
     ReedSolomon.reedSolomonMultiply = function(x, y) {
-        if (x >>> 8 != 0 || y >>> 8 != 0)
-            throw "Byte out of range";
         // Russian peasant multiplication
         var z = 0;
         for (var i = 7; i >= 0; i--) {
             z = (z << 1) ^ ((z >>> 7) * 0x11D);
             z ^= ((y >>> i) & 1) * x;
         }
-        if (z >>> 8 != 0)
-            throw "Assertion error";
         return z;
     };
     ReedSolomon.addEccAndInterleave = function(data, QrCode) {
         var ver = QrCode.version;
         var ecl = QrCode.error_correction_level;
-        if (data.length != ReedSolomon.getNumDataCodewords(ver, QrCode))
-            throw "Invalid argument";
         // Calculate parameter numbers
         var numBlocks = QrCode.NUM_ERROR_CORRECTION_BLOCKS[ErrorCorrectionLevels[ecl]][ver];
         var blockEccLen = QrCode.ECC_CODEWORDS_PER_BLOCK[ErrorCorrectionLevels[ecl]][ver];
@@ -118,8 +106,6 @@ commonFunctions.ReedSolomon = /** @class */ (function() {
         for (var i = 0; i < blocks[0].length; i++) {
             _loop_2(i);
         }
-        if (result.length != rawCodewords)
-            throw "Assertion error";
         return result;
     };
     return ReedSolomon;
