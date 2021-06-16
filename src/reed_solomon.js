@@ -83,6 +83,7 @@ commonFunctions.ReedSolomon = /** @class */ (function() {
         var rawCodewords = Math.floor(ReedSolomon.getNumRawDataModules(ver) / 8);
         var numShortBlocks = numBlocks - rawCodewords % numBlocks;
         var shortBlockLen = Math.floor(rawCodewords / numBlocks);
+
         // Split data into blocks and append ECC to each block
         var blocks = [];
         var rsDiv = ReedSolomon.reedSolomonComputeDivisor(blockEccLen);
