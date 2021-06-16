@@ -83,7 +83,7 @@ commonFunctions.QRCode = class QRCode {
                     resultantCompleteBitString +
                     bitHandlingUtilty.getEncodedBitStringFromNumber(
                         currentNumber,
-                        i + 3 < dataLength ?
+                        i + 2 < dataLength ?
                         10 :
                         currentNumber.toString().length == 1 ?
                         4 :
