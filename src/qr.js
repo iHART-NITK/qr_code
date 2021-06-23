@@ -71,28 +71,26 @@ commonFunctions.QRCode = class QRCode {
     getQRCodeMode() {
         if (NUMERIC_REGEX.test(this.data)) {
             this.mode = "NUMERIC";
-        }
-        else if (ALPHANUMERIC_REGEX.test(this.data)) {
+        } else if (ALPHANUMERIC_REGEX.test(this.data)) {
             this.mode = "ALPHANUMERIC";
-        }
-        else {
+        } else {
             this.mode = "BYTE";
         }
 
     }
 
-    encodeToUTF8ByteArray(str){
+    encodeToUTF8ByteArray(str) {
         str = encodeURI(str);
-			let result = [];
-			for (let i = 0; i < str.length; i++) {
-				if (str.charAt(i) != "%")
-					result.push(str.charCodeAt(i));
-				else {
-					result.push(parseInt(str.substr(i + 1, 2), 16));
-					i += 2;
-				}
-			}
-			return result;
+        let result = [];
+        for (let i = 0; i < str.length; i++) {
+            if (str.charAt(i) != "%")
+                result.push(str.charCodeAt(i));
+            else {
+                result.push(parseInt(str.substr(i + 1, 2), 16));
+                i += 2;
+            }
+        }
+        return result;
     }
 
     encodeDataToBitStream(mode, data) {
@@ -110,10 +108,10 @@ commonFunctions.QRCode = class QRCode {
                     bitHandlingUtilty.getEncodedBitStringFromNumber(
                         currentNumber,
                         i + 2 < dataLength ?
-                            10 :
-                            currentNumber.toString().length == 1 ?
-                                4 :
-                                7,
+                        10 :
+                        currentNumber.toString().length == 1 ?
+                        4 :
+                        7,
                         true
                     );
             }
@@ -130,12 +128,9 @@ commonFunctions.QRCode = class QRCode {
                 let char2 = null;
                 if (!flag) char2 = data.charAt(i + 1);
                 let number = 0;
-                if(!flag)number = number + (alphanumericHash[char1]) * 45;
+                if (!flag) number = number + (alphanumericHash[char1]) * 45;
                 else number = number + (alphanumericHash[char1])
                 if (!flag) number += alphanumericHash[char2];
-                console.log(char1);
-                console.log(char2);
-                console.log(number);
                 resultantCompleteBitString =
                     resultantCompleteBitString +
                     bitHandlingUtilty.getEncodedBitStringFromNumber(
@@ -151,8 +146,8 @@ commonFunctions.QRCode = class QRCode {
             //Byte Mode
             let dataByteArray = this.encodeToUTF8ByteArray(data);
             let resultantCompleteBitString = "";
-            for(let i = 0;i<dataByteArray.length;i++){
-                resultantCompleteBitString+=bitHandlingUtilty.getEncoded8MultipleBitStringFromNumber(dataByteArray[i]);
+            for (let i = 0; i < dataByteArray.length; i++) {
+                resultantCompleteBitString += bitHandlingUtilty.getEncoded8MultipleBitStringFromNumber(dataByteArray[i]);
             }
             this.basic_data_bit_stream = resultantCompleteBitString;
         }
@@ -165,9 +160,9 @@ commonFunctions.QRCode = class QRCode {
             if (
                 parseInt(
                     information[this.error_correction_level.toString()]["data_capacity"][
-                    this.mode
+                        this.mode
                     ]
-                ) >= this.data.length
+                ) >= ((this.mode == "BYTE") ? this.basic_data_bit_stream.length / 8 : this.data.length)
             ) {
                 this.version = parseInt(version);
                 break;
@@ -177,32 +172,29 @@ commonFunctions.QRCode = class QRCode {
 
     getCharacterCountLength() {
         for (let key in characterCountIndicatorLength)
-            if (this.version <= parseInt(key)){
-                return characterCountIndicatorLength[key][this.mode];}
+            if (this.version <= parseInt(key)) {
+                return characterCountIndicatorLength[key][this.mode];
+            }
     }
 
     addModeAndCountBits() {
-        console.log(bitHandlingUtilty.getEncodedBitStringFromNumber(
-            this.data.length,
-            this.getCharacterCountLength(),
-            true
-        ));
-        console.log(QRCodeModes[this.mode]);
+        let character_count_length = this.data.length;
+        if (this.mode == "BYTE")
+            character_count_length = this.basic_data_bit_stream.length / 8;
         this.final_data_bit_stream =
             QRCodeModes[this.mode] +
             bitHandlingUtilty.getEncodedBitStringFromNumber(
-                this.data.length,
+                character_count_length,
                 this.getCharacterCountLength(),
                 true
             ) +
             this.basic_data_bit_stream;
-            console.log(this.final_data_bit_stream);
     }
 
     addTerminatorAndBitPadding() {
         let terminatorLength =
             qrVersionDatabase[this.version.toString()][this.error_correction_level][
-            "codewords"
+                "codewords"
             ] *
             8 -
             this.final_data_bit_stream.length;
@@ -300,7 +292,6 @@ commonFunctions.QRCode = class QRCode {
             this.applyMask(i);
             this.drawFormatBits(i);
             const penalty = this.getPenaltyScore();
-            console.log(penalty);
             if (penalty < minPenalty) {
                 mask = i;
                 minPenalty = penalty;
