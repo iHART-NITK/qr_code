@@ -11,6 +11,12 @@ commonFunctions.BitHandlingUtility = class BitHandlingUtility {
         }
         return resultBitString;
     }
+    getEncoded8MultipleBitStringFromNumber(number) {
+        let resultBitString = "";
+        resultBitString = number.toString(2).toString();
+        while(resultBitString.length%8!=0)resultBitString = '0'+resultBitString;
+        return resultBitString;
+    }
 }
 
 module.exports = commonFunctions;
