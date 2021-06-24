@@ -2,8 +2,7 @@
 module.exports = function(app) {
     var qr = require('../controllers/qrGeneratorController');
 
-    // todoList Routes
-    app.route('/:ecl/:data')
-        .get(qr.qrGeneratorController);
+    app.route('/:ecl/:data').get(qr.qrGeneratorControllerHTML);
+    app.route('/').get(qr.qrGeneratorControllerAPI);
 
 };
