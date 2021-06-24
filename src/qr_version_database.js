@@ -1,4 +1,5 @@
-var commonFunctions = {};
+let commonFunctions = {};
+
 commonFunctions.qrVersionDatabase = {
     "1": {
         "L": {

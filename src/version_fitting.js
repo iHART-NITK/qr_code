@@ -239,4 +239,4 @@ export const versionFittingJson = {
         "2": 1666,
         "3": 1276
     }
-};
+}

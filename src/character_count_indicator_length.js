@@ -1,4 +1,5 @@
-var commonFunctions = {};
+let commonFunctions = {};
+
 commonFunctions.characterCountIndicatorLength = {
     "9": {
         "NUMERIC": 10,
@@ -16,4 +17,5 @@ commonFunctions.characterCountIndicatorLength = {
         "BYTE": 16,
     },
 }
+
 module.exports = commonFunctions;

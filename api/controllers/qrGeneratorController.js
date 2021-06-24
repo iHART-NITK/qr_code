@@ -14,10 +14,11 @@ exports.qrGeneratorController = function(req, res) {
     //     "selected_mask": qr.mask,
     //     "final_svg_string": qr.final_svg
     // });
-    res.send("<div style='width: 50%'>" +
-        qr.final_svg + "</div><br><br><div style='overflow-wrap: break-word;'>" +
-        qr.final_data_bit_stream + "</div><div> Mode: " +
-        qr.mode + "</div><div>Mask: " +
-        qr.mask + "</div><div>Version: " +
-        qr.version + "</div>");
+    // res.send("<div style='width: 50%'>" +
+    //     qr.final_svg + "</div><br><br><div style='overflow-wrap: break-word;'>" +
+    //     qr.final_data_bit_stream + "</div><div> Mode: " +
+    //     qr.mode + "</div><div>Mask: " +
+    //     qr.mask + "</div><div>Version: " +
+    //     qr.version + "</div>");
+    res.render("qr_response", { qr: qr });
 };

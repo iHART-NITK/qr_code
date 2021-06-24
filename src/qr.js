@@ -107,11 +107,7 @@ commonFunctions.QRCode = class QRCode {
                     resultantCompleteBitString +
                     bitHandlingUtilty.getEncodedBitStringFromNumber(
                         currentNumber,
-                        i + 2 < dataLength ?
-                        10 :
-                        currentNumber.toString().length == 1 ?
-                        4 :
-                        7,
+                        i + 2 < dataLength ? 10 : currentNumber.toString().length == 1 ? 4 : 7,
                         true
                     );
             }
@@ -159,9 +155,7 @@ commonFunctions.QRCode = class QRCode {
             let information = qrVersionDatabase[version];
             if (
                 parseInt(
-                    information[this.error_correction_level.toString()]["data_capacity"][
-                        this.mode
-                    ]
+                    information[this.error_correction_level.toString()]["data_capacity"][this.mode]
                 ) >= ((this.mode == "BYTE") ? this.basic_data_bit_stream.length / 8 : this.data.length)
             ) {
                 this.version = parseInt(version);

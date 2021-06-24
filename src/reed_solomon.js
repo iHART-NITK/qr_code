@@ -1,7 +1,6 @@
-"use strict";
 const ErrorCorrectionLevels = require("./error_correction_levels.js").ErrorCorrectionLevels;
+let commonFunctions = {};
 
-var commonFunctions = {};
 commonFunctions.ReedSolomon = /** @class */ (function() {
     function ReedSolomon() {}
     ReedSolomon.getNumRawDataModules = function(ver) {
