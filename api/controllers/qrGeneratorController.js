@@ -3,11 +3,11 @@
 const QRCode = require("../../src/qr.js").QRCode;
 
 exports.qrGeneratorControllerHTML = function(req, res) {
-    console.log(req.query);
-    if (!(req.query.data && req.query.ecl)) {
+    console.log(req);
+    if (!(req.body.data && req.body.ecl)) {
         res.status(417).send({ alert: "Params do not match server expectations", expected_url: "/:ecl/:data" });
     } else {
-        let qr = new QRCode(req.query.data, req.query.ecl);
+        let qr = new QRCode(req.body.data, req.body.ecl);
         qr.generateQRCode();
         res.render("qr_response", { qr: qr });
     }
@@ -28,4 +28,7 @@ exports.qrGeneratorControllerAPI = function(req, res) {
             "final_svg": qr.final_svg
         });
     }
+};
+exports.renderForm = function(req, res) {
+    res.render("qr_form");
 };

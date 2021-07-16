@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title> QR Code Form </title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top p-3 pl-4">
+        <div class="h5 text-center"> <strong> UNISOFT x NITK : QR Code Generator </strong> </div>
+    </nav>
+
+    <div class="row card-deck m-3">
+        <div class="col-lg-5 p-3">
+            <div class="card">
+                <div class="card-header text-center">
+                    <div class="card-title"> <strong> QR Details Form </strong> </div>
+                </div>
+                <div class="card-body">
+                    <form action="/show" method="POST">
+                        <div class="form-group mb-3">
+                          <label for="email">Error Correction Level</label>
+                          <select class="form-select" aria-label="ECL" name = "ecl">
+                            <option value="L">L</option>
+                            <option value="M">M</option>
+                            <option value="Q">Q</option>
+                            <option value="H">H</option>
+                          </select>
+                        </div>
+                        <div class="form-group mb-3">
+                          <label for="data">Data</label>
+                          <input type="text" class="form-control" name="data">
+                        </div>
+                        <button type="submit" class="btn btn-secondary col-lg-12">Submit</button>
+                      </form> 
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
