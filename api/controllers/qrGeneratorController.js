@@ -16,7 +16,7 @@ exports.qrGeneratorControllerHTML = function(req, res) {
 exports.qrGeneratorControllerAPI = function(req, res) {
     console.log(req.body);
     if (!(req.body.data && req.body.ecl)) {
-        res.status(417).send({ alert: "Params do not match server expectations", expected_url: "/:ecl/:data" });
+        res.status(417).send({ alert: "Params do not match server expectations", expected_url: "/",parameters:["ecl","data"] });
     } else {
         let qr = new QRCode(JSON.stringify(req.body.data), req.body.ecl);
         qr.generateQRCode();
