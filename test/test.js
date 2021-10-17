@@ -24,21 +24,21 @@ describe("QR Code testing", () => {
             if (err) throw err;
         });
         var outputFilePath = "";
-        var result;
-        (async () => {
-            outputFilePath = await convertFile(pathToFile, { height: 500, width: 500 });
+        var result = "Chamgaadad";
 
-        })().then(
-            async () => {
-                result = await Decoder.qrtoa(outputFilePath).then(() => {
-                    it("Is scanned svg returning same output as input", () => {
-                        assert.equal("HELLO", result);
-                    });
-                });
+        outputFilePath = convertFile(pathToFile, { height: 500, width: 500 }).then(
 
-            }
+            () => { result = Decoder.qrtoa(outputFilePath); }
+
+
         );
-
+        it("is 3===5", () => {
+            assert.equal(2 + 3, 5);
+        });
+        it("Is scanned svg returning same output as input", () => {
+            while (result == "Chamgaadad");
+            assert.equal("HELLO", result);
+        });
 
     });
 
