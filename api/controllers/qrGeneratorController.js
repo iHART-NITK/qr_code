@@ -1,6 +1,7 @@
 'use strict';
 
 const QRCode = require("../../src/qr.js").QRCode;
+var fs = require('fs');
 
 exports.qrGeneratorControllerHTML = function(req, res) {
     console.log(req);
@@ -20,13 +21,19 @@ exports.qrGeneratorControllerAPI = function(req, res) {
     } else {
         let qr = new QRCode(JSON.stringify(req.body.data), req.body.ecl);
         qr.generateQRCode();
-        res.send({
-            "encoded_data": qr.data,
-            "mode": qr.mode,
-            "version": qr.version,
-            "mask": qr.mask,
-            "final_svg": qr.final_svg
-        });
+        if (req.body.test) {
+            res.send({
+                "encoded_data": qr.data,
+                "mode": qr.mode,
+                "version": qr.version,
+                "mask": qr.mask,
+                "final_svg": qr.final_svg
+            });
+        } else {
+            fs.writeFile("/download.svg", qr.final_svg, () => {});
+            res.download("download.svg");
+            // create file and send by pipe
+        }
     }
 };
 exports.renderForm = function(req, res) {
