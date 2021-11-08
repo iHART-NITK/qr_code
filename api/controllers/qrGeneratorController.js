@@ -30,9 +30,8 @@ exports.qrGeneratorControllerAPI = function(req, res) {
                 "final_svg": qr.final_svg
             });
         } else {
-            fs.writeFile("/download.svg", qr.final_svg, () => {});
-            res.download("download.svg");
-            // create file and send by pipe
+            let filename = "_download.svg";
+            fs.writeFile(filename, qr.final_svg, () => {res.download(filename)});
         }
     }
 };
